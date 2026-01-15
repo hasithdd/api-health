@@ -1,0 +1,14 @@
+
+[2026-01-15 21:00:00] TRAINING RUN #1
+Model: gradient_boosting
+Macro F1: 0.8489
+Malicious Recall: 0.9644
+Suspicious Recall: 0.7379
+--------------------------------------------------
+
+[2026-01-15 21:24:14] TRAINING RUN #2
+Model: gradient_boosting
+Macro F1: 0.8489
+Malicious Recall: 0.9644
+Suspicious Recall: 0.7379
+--------------------------------------------------

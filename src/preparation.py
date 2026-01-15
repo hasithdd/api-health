@@ -1,6 +1,5 @@
 import polars as pl
 
-# Add constants for feature columns and target
 FEATURE_COLUMNS = [
     "is_internal_source_ip",
     "tcp_flag", "udp_flag", "icmp_flag", "ftp_flag", "http_flag", "https_flag", "ssh_flag",
@@ -328,6 +327,19 @@ def save_artifacts(artifacts: dict, output_dir: str = "artifacts"):
             pickle.dump(obj, f)
 
 def apply_features(df: pl.DataFrame, mean: float, std: float) -> pl.DataFrame:
+    """
+    Docstring for apply_features
+    
+    :param df: Description
+    :type df: pl.DataFrame
+    :param mean: Description
+    :type mean: float
+    :param std: Description
+    :type std: float
+    :return: Description
+    :rtype: DataFrame
+    """ 
+
     df = add_ip_flags(df)
     df = add_protocol_type_features(df)
     df = add_treatment_label_encoding(df)
@@ -337,50 +349,6 @@ def apply_features(df: pl.DataFrame, mean: float, std: float) -> pl.DataFrame:
     df = add_path_structure_features(df)
     return df.select(FEATURE_COLUMNS + [TARGET_COLUMN])
 
-
-
-# MAIN PIPELINE (test run)
-
-# if __name__ == "__main__":
-#     file_path = "data/cybersecurity_threat_detection_logs.csv"
-    
-#     # Load and select/cast
-#     df_lazy = load_data(file_path)
-#     df_lazy = select_and_cast(df_lazy)
-    
-#     # Lightweight schema validation
-#     required_cols = ["source_ip", "protocol", "threat_label", "log_type", "bytes_transferred", "user_agent", "request_path"]
-#     schema_names = df_lazy.collect_schema().names()
-#     for col in required_cols:
-#         assert col in schema_names, f"Missing required column: {col}"
-#     assert df_lazy.select(pl.col("threat_label").is_null().sum()).collect().item() == 0, "threat_label contains null values"
-    
-#     # Collect to DataFrame for splitting
-#     df = df_lazy.collect()
-    
-#     # Stratified split
-#     train, val, test = split_data(df)
-    
-#     # Compute scaling stats from train only
-#     mean = train.select(pl.col("bytes_transferred").mean()).item()
-#     std = train.select(pl.col("bytes_transferred").std()).item()
-    
-#     # Apply feature engineering to each split
-#     train = apply_features(train, mean, std)
-#     val = apply_features(val, mean, std)
-#     test = apply_features(test, mean, std)
-    
-#     # Save artifacts including metadata
-#     artifacts = {
-#         "train": train,
-#         "val": val,
-#         "test": test,
-#         "feature_columns": FEATURE_COLUMNS,
-#         "bytes_transferred_mean": mean,
-#         "bytes_transferred_std": std,
-#         "label_mapping": {"benign": 0, "suspicious": 1, "malicious": 2}
-#     }
-#     save_artifacts(artifacts)
 
 def main():
     file_path = "data/cybersecurity_threat_detection_logs.csv"
