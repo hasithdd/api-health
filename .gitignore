@@ -9,3 +9,6 @@ wheels/
 # Virtual environments
 .venv
 cybersecurity_threat_detection_logs.csv
+
+
+artifacts/
