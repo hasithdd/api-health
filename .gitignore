@@ -7,7 +7,7 @@ wheels/
 *.egg-info
 .pytest_cache/
 .ipynb_checkpoints/
-
+.ruff_cache/
 
 # Virtual environments
 .venv
