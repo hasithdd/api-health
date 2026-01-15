@@ -59,14 +59,13 @@ def build_logistic_regression(config: Dict[str, Any]):
         Untrained logistic regression model
     """
     return LogisticRegression(
-        penalty=config.get("penalty", "l2"),
         C=config.get("C", 1.0),
         solver=config.get("solver", "saga"),
         class_weight=config.get("class_weight", None),
         max_iter=config.get("max_iter", 1000),
-        n_jobs=config.get("n_jobs", -1),
-        multi_class="multinomial"
     )
+
+
 
 
 def build_random_forest(config: Dict[str, Any]):

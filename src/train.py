@@ -24,9 +24,8 @@ from typing import Dict, Any
 import numpy as np
 import polars as pl
 
-from model import get_model
-from evaluation import evaluate_classification, summarize_results
-
+from src.model import get_model
+from src.evaluation import evaluate_classification, summarize_results
 
 # Configuration
 

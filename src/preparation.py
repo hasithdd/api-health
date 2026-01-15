@@ -319,7 +319,8 @@ def add_path_structure_features(df: pl.DataFrame) -> pl.DataFrame:
 
 def save_artifacts(artifacts: dict, output_dir: str = "artifacts"):
     """Persist preprocessing artifacts."""
-    import os, pickle
+    import os
+    import pickle
     os.makedirs(output_dir, exist_ok=True)
 
     for name, obj in artifacts.items():

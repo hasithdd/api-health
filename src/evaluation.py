@@ -20,12 +20,11 @@ from typing import Dict, Any
 import numpy as np
 
 from sklearn.metrics import (
-    classification_report,
     confusion_matrix,
     precision_recall_fscore_support,
     f1_score,
-    recall_score,
 )
+
 
 # Core Evaluation
 
