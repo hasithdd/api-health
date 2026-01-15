@@ -9,6 +9,17 @@ import joblib
 from src.model import get_model
 from src.evaluation import evaluate_classification, summarize_results
 
+from src.validation import (
+    plot_confusion,
+    plot_precision_recall,
+    plot_roc,
+    plot_feature_importance,
+)
+
+from src.tuning import tune_xgboost
+
+from src.validation import compare_splits
+
 ARTIFACT_DIR = Path("artifacts")
 MODEL_OUTPUT_DIR = Path("models")
 MODEL_OUTPUT_DIR.mkdir(exist_ok=True)
@@ -115,6 +126,52 @@ def main():
         pickle.dump(best_model, f)
     with open(MODEL_OUTPUT_DIR / "final_metrics.pkl", "wb") as f:
         pickle.dump(final_metrics, f)
+
+    plot_confusion(y_val, best_model.predict(X_val), "val")
+    plot_precision_recall(best_model, X_val, y_val, "val")
+    plot_roc(best_model, X_val, y_val, "val")
+
+    # Test diagnostics
+    plot_confusion(y_test, best_model.predict(X_test), "test")
+    plot_precision_recall(best_model, X_test, y_test, "test")
+    plot_roc(best_model, X_test, y_test, "test")
+
+    plot_feature_importance(best_model, feature_columns)
+
+    compare_splits(
+    train_metrics=results[best_model_name]["metrics"],
+    val_metrics=results[best_model_name]["metrics"],
+    test_metrics=final_metrics,
+    )
+
+    print("\n🔍 Running XGBoost hyperparameter tuning...")
+    best_xgb, best_params = tune_xgboost(
+        X_train,
+        y_train,
+        base_config={
+            "device": "gpu",
+            "random_state": RANDOM_STATE,
+        },
+    )
+
+    print("Best XGBoost params:", best_params)
+
+    # Evaluate tuned model
+    tuned_val_metrics = evaluate_classification(
+        best_xgb, X_val, y_val, "xgboost_tuned"
+    )
+
+    tuned_test_metrics = evaluate_classification(
+        best_xgb, X_test, y_test, "xgboost_tuned_test"
+    )
+
+    # Compare against previous best
+    results["xgboost_tuned"] = {
+        "model": best_xgb,
+        "metrics": tuned_val_metrics,
+    }
+
+    print("Best XGBoost params:", best_params)
 
 if __name__ == "__main__":
     main()

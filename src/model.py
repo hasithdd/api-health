@@ -8,7 +8,7 @@ def build_logistic_regression(config: Dict[str, Any]):
     Logistic Regression using SGDClassifier with 'modified_huber' loss.
     """
     return SGDClassifier(
-        loss="modified_huber", 
+        loss="log_loss", 
         penalty=config.get("penalty", "l2"),
         alpha=0.0001, 
         max_iter=2000,

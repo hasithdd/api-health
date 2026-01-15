@@ -12,3 +12,24 @@ Macro F1: 0.8489
 Malicious Recall: 0.9644
 Suspicious Recall: 0.7379
 --------------------------------------------------
+
+[2026-01-16 02:51:35] TRAINING RUN #3
+Model: gradient_boosting
+Macro F1: 0.8489
+Malicious Recall: 0.9642
+Suspicious Recall: 0.7380
+--------------------------------------------------
+
+[2026-01-16 02:59:24] TRAINING RUN #4
+Model: gradient_boosting
+Macro F1: 0.8489
+Malicious Recall: 0.9642
+Suspicious Recall: 0.7380
+--------------------------------------------------
+
+[2026-01-16 03:39:40] TRAINING RUN #5
+Model: gradient_boosting
+Macro F1: 0.8489
+Malicious Recall: 0.9642
+Suspicious Recall: 0.7380
+--------------------------------------------------
