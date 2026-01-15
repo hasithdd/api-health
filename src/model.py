@@ -158,7 +158,8 @@ def build_gradient_boosting(config: Dict[str, Any]):
         predictor="gpu_predictor" if device == "gpu" else "auto",
         eval_metric="mlogloss",
         n_jobs=config.get("n_jobs", -1),
-        random_state=config.get("random_state", 42)
+        random_state=config.get("random_state", 42),
+        enable_categorical=False
     )
 
 

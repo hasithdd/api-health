@@ -94,27 +94,13 @@ def train_model(
     X_train: np.ndarray,
     y_train: np.ndarray,
 ):
-    """
-    Train a single model using provided configuration.
-
-    Parameters
-    ----------
-    model_name : str
-        Name of the model to train
-    model_config : dict
-        Model hyperparameters
-    X_train : np.ndarray
-        Training features
-    y_train : np.ndarray
-        Training labels
-
-    Returns
-    -------
-    model
-        Trained model instance
-    """
     model = get_model(model_name, model_config)
-    model.fit(X_train, y_train)
+    class_weight = model_config.get("class_weight")
+    sample_weight = None
+    if class_weight is not None:
+        sample_weight = np.array([class_weight[y] for y in y_train])
+
+    model.fit(X_train, y_train, sample_weight=sample_weight)
     return model
 
 
@@ -165,7 +151,6 @@ def main():
             "max_depth": 6,
             "subsample": 0.8,
             "colsample_bytree": 0.8,
-            "scale_pos_weight": class_weight,
             "device": "gpu",  # change to 'cpu' if no GPU
             "random_state": RANDOM_STATE,
         },
