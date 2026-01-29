@@ -22,8 +22,8 @@ WORKDIR /app
 # Copy dependency files first
 COPY pyproject.toml ./
 
-# Install production dependencies only (no dev extras)
-RUN uv sync --no-dev --no-extras
+# Install production dependencies only
+RUN uv sync --no-dev
 
 # Copy application code
 COPY src/ src/
