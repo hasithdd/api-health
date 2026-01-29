@@ -10,7 +10,6 @@ dependencies = [
     "polars",
     "scikit-learn",
     "uvicorn",
-    "xgboost",
 ]
 
 [project.optional-dependencies]
@@ -24,4 +23,9 @@ dev = [
     "pytest",
     "scipy",
     "seaborn",
+    "xgboost",  # GPU version for local training
+]
+
+cpu = [
+    "xgboost-cpu",  # CPU-only for deployment
 ]

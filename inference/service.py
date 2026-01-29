@@ -1,19 +1,43 @@
+import joblib
 import pickle
 import polars as pl
 import numpy as np
 from pathlib import Path
 
-from src.preparation import (
-    select_and_cast,
-    apply_features_inference,
-)
+from src.preparation import apply_features_inference
 
 # Load artifacts once
 ARTIFACT_DIR = Path("artifacts")
 MODEL_DIR = Path("models")
 
-with open(MODEL_DIR / "best_model.pkl", "rb") as f:
-    MODEL = pickle.load(f)
+def load_model():
+    """Load model from joblib or pkl format, converting if needed."""
+    joblib_path = MODEL_DIR / "best_model.joblib"
+    pkl_path = MODEL_DIR / "best_model.pkl"
+    
+    # Prefer joblib if exists
+    if joblib_path.exists():
+        return joblib.load(joblib_path)
+    
+    # Fall back to pkl and convert
+    if pkl_path.exists():
+        with open(pkl_path, "rb") as f:
+            model = pickle.load(f)
+        
+        # Save as joblib for future loads (if writable)
+        try:
+            joblib.dump(model, joblib_path, compress=3)
+        except (PermissionError, OSError):
+            pass  # Read-only filesystem (e.g., Docker)
+        
+        return model
+    
+    raise FileNotFoundError(
+        f"No model found. Expected {joblib_path} or {pkl_path}"
+    )
+
+# Load model once at startup
+MODEL = load_model()
 
 with open(ARTIFACT_DIR / "feature_columns.pkl", "rb") as f:
     FEATURE_COLUMNS = pickle.load(f)
@@ -26,6 +50,7 @@ with open(ARTIFACT_DIR / "bytes_transferred_std.pkl", "rb") as f:
 
 LABEL_MAP = {0: "benign", 1: "suspicious", 2: "malicious"}
 
+
 # Inference-safe casting
 def cast_inference_df(df: pl.DataFrame) -> pl.DataFrame:
     return df.select([
@@ -36,6 +61,7 @@ def cast_inference_df(df: pl.DataFrame) -> pl.DataFrame:
         pl.col("user_agent").cast(pl.Utf8),
         pl.col("request_path").cast(pl.Utf8),
     ])
+
 
 # Prediction function
 def predict(payload: dict):
