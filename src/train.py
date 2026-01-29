@@ -14,11 +14,8 @@ from src.validation import (
     plot_precision_recall,
     plot_roc,
     plot_feature_importance,
+    compare_splits,
 )
-
-from src.tuning import tune_xgboost
-
-from src.validation import compare_splits
 
 ARTIFACT_DIR = Path("artifacts")
 MODEL_OUTPUT_DIR = Path("models")
@@ -96,14 +93,14 @@ def main():
             "random_state": RANDOM_STATE,
         },
         "random_forest": {
-            "n_estimators": 200, # Reduced slightly for memory stability
+            "n_estimators": 200,
             "class_weight": class_weight,
             "random_state": RANDOM_STATE,
         },
         "gradient_boosting": {
             "n_estimators": 400,
             "class_weight": class_weight,
-            "device": "gpu", # Ensure this matches the logic in model.py
+            "device": "gpu",
             "random_state": RANDOM_STATE,
         },
     }
@@ -139,39 +136,39 @@ def main():
     plot_feature_importance(best_model, feature_columns)
 
     compare_splits(
-    train_metrics=results[best_model_name]["metrics"],
-    val_metrics=results[best_model_name]["metrics"],
-    test_metrics=final_metrics,
+        train_metrics=results[best_model_name]["metrics"],
+        val_metrics=results[best_model_name]["metrics"],
+        test_metrics=final_metrics,
     )
 
-    print("\n🔍 Running XGBoost hyperparameter tuning...")
-    best_xgb, best_params = tune_xgboost(
-        X_train,
-        y_train,
-        base_config={
-            "device": "gpu",
-            "random_state": RANDOM_STATE,
-        },
-    )
+    # print("\n🔍 Running XGBoost hyperparameter tuning...")
+    # best_xgb, best_params = tune_xgboost(
+    #     X_train,
+    #     y_train,
+    #     base_config={
+    #         "device": "gpu",
+    #         "random_state": RANDOM_STATE,
+    #     },
+    # )
 
-    print("Best XGBoost params:", best_params)
+    # print("Best XGBoost params:", best_params)
 
-    # Evaluate tuned model
-    tuned_val_metrics = evaluate_classification(
-        best_xgb, X_val, y_val, "xgboost_tuned"
-    )
+    # # Evaluate tuned model
+    # tuned_val_metrics = evaluate_classification(
+    #     best_xgb, X_val, y_val, "xgboost_tuned"
+    # )
 
-    tuned_test_metrics = evaluate_classification(
-        best_xgb, X_test, y_test, "xgboost_tuned_test"
-    )
+    # tuned_test_metrics = evaluate_classification(
+    #     best_xgb, X_test, y_test, "xgboost_tuned_test"
+    # )
 
-    # Compare against previous best
-    results["xgboost_tuned"] = {
-        "model": best_xgb,
-        "metrics": tuned_val_metrics,
-    }
+    # # Compare against previous best
+    # results["xgboost_tuned"] = {
+    #     "model": best_xgb,
+    #     "metrics": tuned_val_metrics,
+    # }
 
-    print("Best XGBoost params:", best_params)
+    # print("Best XGBoost params:", best_params)
 
 if __name__ == "__main__":
     main()
