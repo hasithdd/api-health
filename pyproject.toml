@@ -1,23 +1,27 @@
 [project]
 name = "cybersec"
 version = "0.1.0"
-description = "Add your description here"
+description = "Cybersecurity threat detection pipeline"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi",
-    "ipykernel",
     "joblib",
+    "polars",
+    "scikit-learn",
+    "uvicorn",
+    "xgboost",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ipykernel",
     "matplotlib",
     "nbformat",
     "pandas",
     "plotly",
-    "polars",
     "pyarrow",
     "pytest",
-    "scikit-learn",
     "scipy",
     "seaborn",
-    "uvicorn",
-    "xgboost",
 ]

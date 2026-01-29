@@ -22,17 +22,14 @@ WORKDIR /app
 # Copy dependency files first
 COPY pyproject.toml ./
 
-# Install dependencies (CPU only)
-RUN uv sync --no-dev
+# Install production dependencies only (no dev extras)
+RUN uv sync --no-dev --no-extras
 
 # Copy application code
 COPY src/ src/
 COPY inference/ inference/
 COPY artifacts/ artifacts/
 COPY models/ models/
-COPY logs/ logs/
-COPY main.py .
-COPY README.md .
 
 # Expose API port
 EXPOSE 8000

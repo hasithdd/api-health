@@ -1,0 +1,55 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+.eggs/
+*.egg-info/
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Data (large files - artifacts/models are copied explicitly)
+data/
+
+# Logs (will be created at runtime)
+logs/
+
+# Cache
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+
+# Build
+dist/
+build/
+
+# Lock file (regenerated in container)
+uv.lock
+
+# Notebooks
+notebooks/
+
+# Documentation
+*.md
+!README.md
+
+# OS
+.DS_Store
+Thumbs.db
