@@ -18,7 +18,9 @@ A complete machine learning pipeline for detecting cybersecurity threats (benign
 10. [Using Notebooks](#using-notebooks)
 11. [Configuration & Parameters](#configuration--parameters)
 12. [CPU/GPU Configuration](#cpugpu-configuration)
-13. [Troubleshooting](#troubleshooting)
+13. [Inference API](#inference-api)
+14. [Deployment](#deployment)
+15. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -594,6 +596,307 @@ uv python pin 3.13
 
 # Resync
 uv sync
+```
+
+---
+
+## Inference API
+
+The project includes a production-ready **FastAPI** inference service for real-time threat detection.
+
+### API Architecture
+
+```
+inference/
+├── __init__.py
+├── api.py          # FastAPI application & endpoints
+├── service.py      # Model loading & prediction logic
+├── schemas.py      # Pydantic request/response models
+└── logging.py      # Structured logging setup
+```
+
+### Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Health check - returns model status |
+| `/predict` | POST | Predict threat level from log data |
+| `/docs` | GET | Interactive Swagger UI documentation |
+| `/redoc` | GET | ReDoc API documentation |
+
+### Request/Response Schema
+
+**Request (`POST /predict`):**
+
+```json
+{
+    "source_ip": "192.168.1.10",
+    "protocol": "HTTP",
+    "log_type": "firewall",
+    "bytes_transferred": 1200,
+    "user_agent": "curl/7.68.0",
+    "request_path": "/admin/login.php?user=admin"
+}
+```
+
+**Response:**
+
+```json
+{
+    "prediction": "suspicious",
+    "confidence": 0.9999989271163940
+}
+```
+
+### Prediction Labels
+
+| Label | Meaning |
+|-------|---------|
+| `benign` | Normal, safe traffic |
+| `suspicious` | Potentially malicious, requires investigation |
+| `malicious` | Active threat, immediate action required |
+
+### How the Inference Pipeline Works
+
+1. **Model Loading** (startup):
+   - Attempts to load `models/best_model.joblib` (preferred, compressed)
+   - Falls back to `models/best_model.pkl` and auto-converts to joblib
+   - Loads feature columns and normalization parameters from `artifacts/`
+
+2. **Request Processing**:
+   - Validates incoming JSON against Pydantic schema
+   - Casts columns to correct types (Categorical, Int64, Utf8)
+   - Applies same feature engineering as training pipeline
+
+3. **Prediction**:
+   - Runs inference using loaded model
+   - Returns predicted class and confidence score
+
+---
+
+## Deployment
+
+### Option 1: Local Development Server
+
+Run the API directly without Docker:
+
+```bash
+# Ensure dependencies are installed
+uv sync
+
+# Start the development server
+uv run uvicorn inference.api:app --host 0.0.0.0 --port 8000 --reload
+```
+
+**Flags explained:**
+- `--host 0.0.0.0`: Accept connections from any IP
+- `--port 8000`: Listen on port 8000
+- `--reload`: Auto-reload on code changes (development only)
+
+**Test the API:**
+
+```bash
+# Health check
+curl http://localhost:8000/health
+
+# Prediction
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source_ip": "192.168.1.10",
+    "protocol": "HTTP",
+    "log_type": "firewall",
+    "bytes_transferred": 1200,
+    "user_agent": "curl/7.68.0",
+    "request_path": "/admin/login.php?user=admin"
+  }'
+```
+
+**Production server (without reload):**
+
+```bash
+uv run uvicorn inference.api:app --host 0.0.0.0 --port 8000 --workers 4
+```
+
+### Option 2: Docker Deployment (Recommended for Production)
+
+#### Build the Image
+
+```bash
+docker build -t cybersec-api:cpu .
+```
+
+#### Run the Container
+
+```bash
+# Basic run
+docker run -p 8000:8000 cybersec-api:cpu
+
+# Run in background (detached)
+docker run -d -p 8000:8000 --name cybersec-api cybersec-api:cpu
+
+# With restart policy
+docker run -d -p 8000:8000 --restart unless-stopped --name cybersec-api cybersec-api:cpu
+```
+
+#### Docker Commands Reference
+
+```bash
+# View running containers
+docker ps
+
+# View logs
+docker logs cybersec-api
+docker logs -f cybersec-api  # Follow logs
+
+# Stop container
+docker stop cybersec-api
+
+# Remove container
+docker rm cybersec-api
+
+# Remove image
+docker rmi cybersec-api:cpu
+```
+
+#### Test the Containerized API
+
+```bash
+# Health check
+curl http://localhost:8000/health
+# Response: {"status":"ok","model_loaded":true}
+
+# Prediction
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source_ip": "10.0.0.50",
+    "protocol": "SSH",
+    "log_type": "ids",
+    "bytes_transferred": 5000,
+    "user_agent": "Nmap/7.92",
+    "request_path": "/../../etc/passwd"
+  }'
+# Response: {"prediction":"malicious","confidence":0.998...}
+```
+
+### Dockerfile Explained
+
+```dockerfile
+# Base image - Python 3.13 slim for minimal size
+FROM python:3.13-slim
+
+# Prevent Python from writing .pyc files and buffer stdout/stderr
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV UV_SYSTEM_PYTHON=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv package manager
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:${PATH}"
+
+WORKDIR /app
+
+# Copy dependency file and install (layer caching optimization)
+COPY pyproject.toml ./
+RUN uv sync --no-dev --extra cpu  # Production deps + CPU-only XGBoost
+
+# Copy application code and artifacts
+COPY src/ src/
+COPY inference/ inference/
+COPY artifacts/ artifacts/
+COPY models/ models/
+
+EXPOSE 8000
+
+# Run FastAPI with uvicorn
+CMD ["uv", "run", "uvicorn", "inference.api:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+### Dependency Groups
+
+The `pyproject.toml` uses optional dependency groups:
+
+| Group | Purpose | Install Command |
+|-------|---------|-----------------|
+| (base) | Production runtime | `uv sync --no-dev` |
+| `dev` | Notebooks, plotting, testing | `uv sync --extra dev` |
+| `cpu` | CPU-only XGBoost | `uv sync --extra cpu` |
+
+**Docker uses:** `uv sync --no-dev --extra cpu` for minimal image without CUDA libraries.
+
+### Model Format Handling
+
+The inference service automatically handles model format conversion:
+
+```python
+def load_model():
+    # 1. Try loading joblib (preferred - smaller, faster)
+    if "best_model.joblib" exists:
+        return joblib.load(...)
+    
+    # 2. Fall back to pickle and convert
+    if "best_model.pkl" exists:
+        model = pickle.load(...)
+        joblib.dump(model, "best_model.joblib", compress=3)  # Cache for next load
+        return model
+```
+
+**Benefits of joblib over pickle:**
+- 3x compression with `compress=3`
+- Faster loading for numpy arrays
+- Memory-mapped loading option for large models
+
+### Production Considerations
+
+#### Running Behind a Reverse Proxy (nginx)
+
+```nginx
+server {
+    listen 80;
+    server_name api.yourdomain.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+#### Docker Compose (with health checks)
+
+```yaml
+version: '3.8'
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+```
+
+#### Environment Variables
+
+```bash
+# Production settings
+docker run -d \
+  -p 8000:8000 \
+  -e LOG_LEVEL=warning \
+  -e WORKERS=4 \
+  cybersec-api:cpu
 ```
 
 ---
