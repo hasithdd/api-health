@@ -1,0 +1,7 @@
+[2026-01-29 20:32:10,161] INFO | Health check called
+[2026-01-29 20:32:16,090] INFO | Prediction request received | protocol=HTTP
+[2026-01-29 20:36:57,259] INFO | Prediction request received | protocol=HTTP
+[2026-01-29 20:40:56,061] INFO | Prediction request received | protocol=HTTP
+[2026-01-29 20:40:56,099] INFO | Prediction=suspicious confidence=1.000
+[2026-01-29 20:42:22,488] INFO | Prediction request received | protocol=HTTP
+[2026-01-29 20:42:22,505] INFO | Prediction=suspicious confidence=1.000

@@ -349,6 +349,20 @@ def apply_features(df: pl.DataFrame, mean: float, std: float) -> pl.DataFrame:
     df = add_path_structure_features(df)
     return df.select(FEATURE_COLUMNS + [TARGET_COLUMN])
 
+def apply_features_inference(df: pl.DataFrame, mean: float, std: float) -> pl.DataFrame:
+    """
+    Apply feature engineering for inference (NO label encoding).
+    """
+
+    df = add_ip_flags(df)
+    df = add_protocol_type_features(df)
+    df = add_log_type_features(df)
+    df = add_bytes_transferred_scaling(df, mean, std)
+    df = add_user_agent_features(df)
+    df = add_path_structure_features(df)
+
+    return df.select(FEATURE_COLUMNS)
+
 
 def main():
     file_path = "data/cybersecurity_threat_detection_logs.csv"
