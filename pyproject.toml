@@ -15,10 +15,10 @@ dependencies = [
     "polars",
     "pyarrow",
     "pytest",
-    "ruff>=0.14.14",
+    "ruff",
     "scikit-learn",
     "scipy",
     "seaborn",
-    "uvicorn>=0.40.0",
+    "uvicorn",
     "xgboost",
 ]
